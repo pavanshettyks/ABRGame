@@ -1,0 +1,12 @@
+.hand {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    overflow-x: auto;
+    padding: 10px;
+    width: 100%;
+}
+
+.hand::-webkit-scrollbar {
+    display: none; /* Hide scrollbar on mobile */
+}

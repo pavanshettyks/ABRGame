@@ -1,0 +1,41 @@
+.entry-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f4f4f4;
+}
+
+.input-field {
+  width: 80%;
+  max-width: 300px;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.button {
+  width: 80%;
+  max-width: 300px;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.player-name {
+  text-align: center;
+  font-size: 1.5em;
+  margin-top: 10px;
+  color: #333;
+}
