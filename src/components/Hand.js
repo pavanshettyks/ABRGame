@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Card from "./Card";
 import "../css/Hand.css";
 
 const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, dropCard}) => {
     const [cards, setCards] = useState(initialCards);
     const [isCurrentPlayerTurn, setIsCurrentPlayerTurn] = useState(currentTurnPlayer === currentPlayer);
+
+    useEffect(() => {
+        setCards(initialCards);
+    }, [initialCards]);
 
     // Remove card from hand
     const handleRemoveCard = (index) => {
