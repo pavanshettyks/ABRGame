@@ -9,7 +9,8 @@ import { initializeGame } from "./components/GameLogic";
 
 function App() {
   const [gameId, setGameId] = useState(null);
-  const [players, setPlayers] = useState([]);
+  // const [players, setPlayers] = useState([]);
+  const [playersDetails, setPlayersDetails] = useState({"players":[], "currentPlayerTurn": 0});
   const [isHost, setIsHost] = useState(false);
   const [isInLobby, setIsInLobby] = useState(false);
   const [playerName, setPlayerName] = useState("");
@@ -35,10 +36,17 @@ function App() {
       conn.on("data", (data) => {
         console.log("Received data:", data);
         if (data.type === "join") {
-            setPlayers((prev) => {
-              const team = prev.length % 2 === 0 ? "A" : "B";
-              const updatedPlayers = [...prev, { id: prev.length + 1, name: data.playerName, team }];
-              return updatedPlayers;
+            // setPlayers((prev) => {
+            //   const team = prev.length % 2 === 0 ? "A" : "B";
+            //   const updatedPlayers = [...prev, { id: prev.length + 1, name: data.playerName, team }];
+            //   return updatedPlayers;
+            // });
+              console.log(playersDetails);
+            setPlayersDetails((prev) => {
+              const team = prev.players.length % 2 === 0 ? "A" : "B";
+              const updatedPlayers = [...prev.players, { id: prev.players.length + 1, name: data.playerName, team }];
+              console.log("saav", updatedPlayers);
+              return {"players":updatedPlayers, "currentPlayerTurn":0};
             });
             setPlayerMap((prev) => {
               const playerCount = Object.keys(prev).length;
@@ -58,7 +66,8 @@ function App() {
             });
           }
           if (data.type === "gameProgress") {
-            setPlayers((prev) => {
+            console.log(data.playersData);
+            setPlayersDetails((prev) => {
               return data.playersData;
             });
           }
@@ -75,10 +84,10 @@ function App() {
   useEffect(() => {
     if (isHost && gameStarted) {
       console.log("Hope is a medicine");
-      broadCastPlayersDataDuringGame(players);
+      broadCastPlayersDataDuringGame(playersDetails);
       console.log("hope ends");
     }
-  }, [players]);  
+  }, [playersDetails]);  
 
 // This will be used as a trigger to send initial game update for every round
 useEffect(() => {
@@ -86,7 +95,7 @@ useEffect(() => {
     setCurrentIteration(1);
     const gameData = initializeGame(currentRound, playerMap);
     broadCastGameData(gameData)
-    handleResetDroppedCards();
+    handleResetDroppedCards(gameData.currentPlayerTurn);
   }
  }, [currentRound]);
 
@@ -105,7 +114,7 @@ useEffect(() => {
       conn.on("data", (data) => {
         if (data.type === "playersData") {
           // console.log("Recieved player data: ", data.playersData);
-          setPlayers(data.playersData);
+          setPlayersDetails(data.playersData);
         }
         if (data.type === "gameData") {
           // console.log("Game Data recieved", data)
@@ -155,7 +164,7 @@ useEffect(() => {
     Object.entries(updatedMap).forEach(([name, value]) => {
       if (value.connection && value.connection.open) {
         console.log(`Broacasting the update Player: ${name}, Peer ID: ${value.connection.peer}, team : ${value.teamName}`);
-        value.connection.send({ type: "playersData", "playersData": players });
+        value.connection.send({ type: "playersData", "playersData": { "players":players, "currentPlayerTurn":0} });
       }
     });
   };
@@ -166,13 +175,13 @@ useEffect(() => {
     connectionToHost.send({ type: "gameProgress", "playersData":playersData });
   };
 
-  const handleResetDroppedCards = () => {
-    const updatedPlayersData = [...players];
+  const handleResetDroppedCards = (currentPlayerTurn) => {
+    const updatedPlayersData = [...playersDetails.players];
     for (let i = 0; i < updatedPlayersData.length; i++) {
         updatedPlayersData[i].droppedCard = null;
         console.log(updatedPlayersData[i]);
     }
-    setPlayers(updatedPlayersData);
+    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
   }
 
   const handleHostGame = (name) => {
@@ -181,11 +190,9 @@ useEffect(() => {
       return;
    }
    setPlayerName(name);
-    setPlayers((prev) => [
-      ...prev,
-      { id: prev.length + 1, name: name, team: "A" },
-      // { id: prev.length + 2, name: "name1", team: "B" },
-    ]);
+    setPlayersDetails(
+      {"players" : [{ id: 1, name: name, team: "A" }]});
+      // { id: prev.length + 2, name: "name1", team: "B" },);
     setPlayerMap((prev) => {
       const updatedMap = {
         ...prev,
@@ -222,17 +229,19 @@ useEffect(() => {
 
   const handleDropCard = (card, indexOfCurrentPlayer) => {
     console.log(indexOfCurrentPlayer, " triggered drop card", card);
-    const updatedPlayersData = [...players];
+    const updatedPlayersData = [...playersDetails.players];
     if(!updatedPlayersData[indexOfCurrentPlayer].droppedCard) {
         updatedPlayersData[indexOfCurrentPlayer].droppedCard = {};
     }
     updatedPlayersData[indexOfCurrentPlayer].droppedCard = card;
     console.log("Updated players data:", updatedPlayersData);
-    setPlayers(updatedPlayersData);
+    const currentPlayerTurn = (indexOfCurrentPlayer + 1) % updatedPlayersData.length;
+    console.log("index of game", currentPlayerTurn);
+    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
     if (isHost) {
-      broadCastPlayersDataDuringGame(updatedPlayersData)
+      broadCastPlayersDataDuringGame({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn})
     } else {
-      broadCastUpdateToHost(updatedPlayersData);
+      broadCastUpdateToHost({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
     }
   }; 
 
@@ -245,10 +254,13 @@ useEffect(() => {
           onJoinGame={handleJoinGame} 
         />
       ) : !gameStarted ? (
-        <GameLobby gameId={gameId} players={players} isHost={isHost} onStartGame={handleStartGame} />
+        <GameLobby gameId={gameId} players={playersDetails.players} isHost={isHost} 
+        onStartGame={handleStartGame}
+        />
       ) : (
-        <GameScreen players={players} currentPlayer={playerName} gameData={gameData}
-            dropCard={handleDropCard}/>
+        <GameScreen players={playersDetails.players} currentPlayer={playerName} gameData={gameData}
+            currentPlayerTurn={playersDetails.currentPlayerTurn} dropCard={handleDropCard}
+            isHost={isHost} />
       )}
     </div>
   );

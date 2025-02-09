@@ -3,15 +3,13 @@ import "../css/GameScreen.css";
 import Hand from "./Hand";
 import Card from "./Card";
 
-const GameScreen = ({ players, currentPlayer, gameData, dropCard}) => {
+const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
   let currentTurnPlayerName = null;
   const cutterCard = gameData.cutterCard;
   const indexOfCurrentPlayer = players.findIndex(player => player.name === currentPlayer);
 
   if (gameData && gameData.playersToCard){
-    console.log(currentPlayer, indexOfCurrentPlayer);
-    console.log(gameData); //.playersToCard[indexOfCurrentPlayer]);
-    currentTurnPlayerName = players[gameData.currentPlayerTurn].name;
+    currentTurnPlayerName = players[currentPlayerTurn].name;
   }
 
 //   const handleNextTurn = () => {
@@ -31,7 +29,7 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard}) => {
           return (
             <div
               key={player.id}
-              className={`player ${index === gameData.currentPlayerTurn ? "active" : ""} ${player.name === currentPlayer ? "current-player" : ""} ${player.team === "A" ? "team-a" : "team-b"}`}
+              className={`player ${index === currentPlayerTurn ? "active" : ""} ${player.name === currentPlayer ? "current-player" : ""} ${player.team === "A" ? "team-a" : "team-b"}`}
               style={{ transform: `rotate(${angle}deg) translate(120px) rotate(-${angle}deg)` }}
             >
               {player.name}
@@ -49,7 +47,7 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard}) => {
         {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
         {gameData && gameData.playersToCard 
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
-                     currentTurnPlayer = {gameData.currentPlayerTurn}
+                     currentTurnPlayer = {currentPlayerTurn}
                      currentPlayer = {indexOfCurrentPlayer}
                      dropCard={dropCard}
                 />}
