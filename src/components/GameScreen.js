@@ -4,12 +4,15 @@ import Hand from "./Hand";
 import Card from "./Card";
 
 const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
+  console.log("Game Data...", gameData);
   let currentTurnPlayerName = null;
+  let currentPlayerHand = null;
   const cutterCard = gameData.cutterCard;
   const indexOfCurrentPlayer = players.findIndex(player => player.name === currentPlayer);
 
   if (gameData && gameData.playersToCard){
     currentTurnPlayerName = players[currentPlayerTurn].name;
+    currentPlayerHand = gameData.playersToCard[indexOfCurrentPlayer];
   }
 
 //   const handleNextTurn = () => {
@@ -37,7 +40,7 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
                     <div className="player-card" style={{ transform: `translate(20px, 20px)` }}>
                        <Card suit={playerCard.suit} rank={playerCard.rank} />
                     </div>
-                )}
+                )} 
             </div>
           );
         })}
@@ -45,7 +48,7 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
       <div className="current-player-view">
         <h3>Cutter card is: {cutterCard}</h3>
         {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
-        {gameData && gameData.playersToCard 
+        {gameData && gameData.playersToCard   
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
                      currentTurnPlayer = {currentPlayerTurn}
                      currentPlayer = {indexOfCurrentPlayer}

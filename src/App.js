@@ -10,7 +10,7 @@ import { initializeGame } from "./components/GameLogic";
 function App() {
   const [gameId, setGameId] = useState(null);
   // const [players, setPlayers] = useState([]);
-  const [playersDetails, setPlayersDetails] = useState({"players":[], "currentPlayerTurn": 0});
+  const [playersDetails, setPlayersDetails] = useState({"players":[], "currentPlayerTurn": 0, "currentIterationCounter": 1});
   const [isHost, setIsHost] = useState(false);
   const [isInLobby, setIsInLobby] = useState(false);
   const [playerName, setPlayerName] = useState("");
@@ -26,11 +26,19 @@ function App() {
 
   useEffect(() => {
   if (isHost) {
-    const newPeer = new Peer();
-    newPeer.on("open", (id) => {
-      console.log("Host Peer ID:", id);
-      setGameId(id); // Set gameId to the peer ID
-    });
+
+    let newPeer = null;
+    if (!peer){
+        newPeer = new Peer();
+        newPeer.on("open", (id) => {
+        console.log("Host Peer ID:", id);
+        setGameId(id); // Set gameId to the peer ID
+      });
+      setPeer(newPeer);
+    } else {
+      newPeer = peer;
+    }
+
     newPeer.on("connection", (conn) => {
       console.log("New player connected:", conn.peer);
       conn.on("data", (data) => {
@@ -41,12 +49,11 @@ function App() {
             //   const updatedPlayers = [...prev, { id: prev.length + 1, name: data.playerName, team }];
             //   return updatedPlayers;
             // });
-              console.log(playersDetails);
+            console.log(playersDetails);
             setPlayersDetails((prev) => {
               const team = prev.players.length % 2 === 0 ? "A" : "B";
               const updatedPlayers = [...prev.players, { id: prev.players.length + 1, name: data.playerName, team }];
-              console.log("saav", updatedPlayers);
-              return {"players":updatedPlayers, "currentPlayerTurn":0};
+              return {"players":updatedPlayers, "currentPlayerTurn":0, "currentIterationCounter": 1};
             });
             setPlayerMap((prev) => {
               const playerCount = Object.keys(prev).length;
@@ -70,6 +77,7 @@ function App() {
             setPlayersDetails((prev) => {
               return data.playersData;
             });
+            setCurrentIteration(data.playersData.currentIterationCounter);
           }
       });
     });
@@ -89,15 +97,25 @@ function App() {
     }
   }, [playersDetails]);  
 
-// This will be used as a trigger to send initial game update for every round
+// This will be used as a trigger to send game data for every round
 useEffect(() => {
-  if (currentRound) {
+  console.log("round update.................", currentRound);
+  if (isHost && currentRound) {
     setCurrentIteration(1);
     const gameData = initializeGame(currentRound, playerMap);
     broadCastGameData(gameData)
-    handleResetDroppedCards(gameData.currentPlayerTurn);
+    handleResetDroppedCards(gameData.currentPlayerTurn, 1);
   }
  }, [currentRound]);
+
+ // This will be used to trigger update round after finishing all iterations in the prev round
+ useEffect(() => {
+  if (isHost && currentIteration) {
+    if (currentIteration > currentRound){
+      setCurrentRound(currentRound+1);
+    }
+  }
+ }, [currentIteration]);
 
 // For non host to handle updates
   useEffect(() => {
@@ -107,19 +125,19 @@ useEffect(() => {
           console.log("Player Peer ID:", id);
           const conn = newPeer.connect(gameId);
           conn.on("open", () => {
-          // console.log("Connected to host:", gameId, playerName);
+          console.log("Connected to host:", gameId, playerName);
           conn.send({ type: "join", playerName });
           setconnectionToHost(conn);
       });
       conn.on("data", (data) => {
         if (data.type === "playersData") {
-          // console.log("Recieved player data: ", data.playersData);
+          console.log("Recieved player data: ", data.playersData);
           setPlayersDetails(data.playersData);
         }
         if (data.type === "gameData") {
           // console.log("Game Data recieved", data)
           setGameStarted(data.data.isGame);
-          setGameData(data.data.gameDetails);
+          setGameData(data.data.gameDetails); 
         }
       });
       setConnections((prev) => ({ ...prev, [gameId]: conn }));
@@ -131,7 +149,6 @@ useEffect(() => {
 
   // send game details to all players
   const broadCastGameData = (gameData) => {
-    // const gameData = initializeGame(currentRound, playerMap);
     console.log(`Initial gameData:`, gameData);
     Object.entries(playerMap).forEach(([name, value]) => {
       if (value.connection && value.connection.open) {
@@ -143,7 +160,7 @@ useEffect(() => {
   };
 
   const broadCastPlayersDataDuringGame = (playersData) => {
-    console.log("Broadcasting the progress data during game", playerMap);
+    // console.log("Broadcasting the progress data during game", playerMap);
     Object.entries(playerMap).forEach(([name, value]) => {
       if (value.connection && value.connection.open) {
         console.log(`Broacasting players data to Player: ${name}, team : ${value.teamName}`, playersData);
@@ -154,7 +171,7 @@ useEffect(() => {
 
   // can be removed
   const broadCastPlayersData = (updatedMap) => {
-    console.log(updatedMap);
+    // console.log(updatedMap);
     const players = Object.keys(updatedMap).map((playerName, index) => ({
       id: index + 1,  // id will be index + 1, since you want a sequence starting from 1
       name: playerName,
@@ -164,7 +181,7 @@ useEffect(() => {
     Object.entries(updatedMap).forEach(([name, value]) => {
       if (value.connection && value.connection.open) {
         console.log(`Broacasting the update Player: ${name}, Peer ID: ${value.connection.peer}, team : ${value.teamName}`);
-        value.connection.send({ type: "playersData", "playersData": { "players":players, "currentPlayerTurn":0} });
+        value.connection.send({ type: "playersData", "playersData": { "players":players, "currentPlayerTurn":0, "currentIterationCounter": 1} });
       }
     });
   };
@@ -172,16 +189,18 @@ useEffect(() => {
   // send turn update to host
   const broadCastUpdateToHost = (playersData) => {
     console.log("Sending the game progress to host");
-    connectionToHost.send({ type: "gameProgress", "playersData":playersData });
+    connectionToHost.send({ type: "gameProgress", "playersData":playersData});
   };
 
-  const handleResetDroppedCards = (currentPlayerTurn) => {
+  const handleResetDroppedCards = (currentPlayerTurn, currentIterationCounter) => {
     const updatedPlayersData = [...playersDetails.players];
     for (let i = 0; i < updatedPlayersData.length; i++) {
         updatedPlayersData[i].droppedCard = null;
         console.log(updatedPlayersData[i]);
     }
-    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
+    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
+      "currentIterationCounter": currentIterationCounter
+    });
   }
 
   const handleHostGame = (name) => {
@@ -222,13 +241,14 @@ useEffect(() => {
   };
 
   const handleStartGame = () => {
-    setCurrentRound(10);
+    setCurrentRound(2);
     setCurrentIteration(1);
     setGameStarted(true); 
   };
 
   const handleDropCard = (card, indexOfCurrentPlayer) => {
     console.log(indexOfCurrentPlayer, " triggered drop card", card);
+    let currentIterationCounter = playersDetails.currentIterationCounter;
     const updatedPlayersData = [...playersDetails.players];
     if(!updatedPlayersData[indexOfCurrentPlayer].droppedCard) {
         updatedPlayersData[indexOfCurrentPlayer].droppedCard = {};
@@ -237,17 +257,26 @@ useEffect(() => {
     console.log("Updated players data:", updatedPlayersData);
     const currentPlayerTurn = (indexOfCurrentPlayer + 1) % updatedPlayersData.length;
     console.log("index of game", currentPlayerTurn);
-    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
+    const isNextIteration = updatedPlayersData.every(obj => obj.droppedCard);
+    if ( isNextIteration ) {
+      console.log("Yahooo all iterations complete");
+      currentIterationCounter = currentIterationCounter + 1;
+    }
+    setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn, "currentIterationCounter": currentIterationCounter});
     if (isHost) {
-      broadCastPlayersDataDuringGame({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn})
+      broadCastPlayersDataDuringGame({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
+        "currentIterationCounter": currentIterationCounter
+      })
     } else {
-      broadCastUpdateToHost({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn});
+      broadCastUpdateToHost({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
+        "currentIterationCounter": currentIterationCounter
+      });
     }
   }; 
 
   return (
     <div className="App">
-      {playerName && <h2 className="player-name">Welcome, {playerName}!</h2>}
+      {playerName && <h2 className="player-name">Welcome,, {playerName}!</h2>}
       {!gameId ? (
         <EntryScreen 
           onHostGame={handleHostGame} 

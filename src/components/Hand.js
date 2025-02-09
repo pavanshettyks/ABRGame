@@ -11,7 +11,7 @@ const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, dropCard}) => {
         console.log("Remove one card: ", isCurrentPlayerTurn)
         if (true) {
             const droppedCard = cards[index];
-            console.log("Dropped card", droppedCard)
+            console.log("Dropped card", droppedCard) 
             setCards(cards.filter((_, i) => i !== index));
             setIsCurrentPlayerTurn(false)
             dropCard(droppedCard, currentPlayer);
