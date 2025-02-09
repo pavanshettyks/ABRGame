@@ -245,10 +245,12 @@ useEffect(() => {
           onJoinGame={handleJoinGame} 
         />
       ) : !gameStarted ? (
-        <GameLobby gameId={gameId} players={players} isHost={isHost} onStartGame={handleStartGame} />
+        <GameLobby gameId={gameId} players={players} isHost={isHost} 
+        onStartGame={handleStartGame}
+        />
       ) : (
         <GameScreen players={players} currentPlayer={playerName} gameData={gameData}
-            dropCard={handleDropCard}/>
+            currentPlayerTurn={gameData.currentPlayerTurn} dropCard={handleDropCard}/>
       )}
     </div>
   );
