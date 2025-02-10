@@ -1,9 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/EntryScreen.css";
 
-const EntryScreen = ({ onHostGame, onJoinGame, onNameSubmit }) => {
+const EntryScreen = ({ onHostGame, onJoinGame }) => {
   const [name, setName] = useState("");
   const [gameId, setGameId] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = params.get("gameId");
+    if (gameIdFromUrl) {
+      setGameId(gameIdFromUrl);
+    }
+  }, []);
 
   return (
     <div className="entry-container">
