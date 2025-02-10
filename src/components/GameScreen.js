@@ -3,13 +3,16 @@ import "../css/GameScreen.css";
 import Hand from "./Hand";
 import Card from "./Card";
 
-const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
+const GameScreen = ({playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn,
+  isHost, onNextTurnButton}) => {
   let currentTurnPlayerName = null;
+  let currentPlayerHand = null;
   const cutterCard = gameData.cutterCard;
-  const indexOfCurrentPlayer = players.findIndex(player => player.name === currentPlayer);
+  const indexOfCurrentPlayer = playersDetails.players.findIndex(player => player.name === currentPlayer);
 
   if (gameData && gameData.playersToCard){
-    currentTurnPlayerName = players[currentPlayerTurn].name;
+    currentTurnPlayerName = playersDetails.players[currentPlayerTurn].name;
+    currentPlayerHand = gameData.playersToCard[indexOfCurrentPlayer];
   }
 
 //   const handleNextTurn = () => {
@@ -23,8 +26,8 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
     <div className="game-screen"> 
       <h2>Round {gameData.roundNumber}</h2> 
       <div className="player-circle"> 
-        {players.map((player, index) => {
-          const angle = (360 / players.length) * index;
+        {playersDetails.players.map((player, index) => {
+          const angle = (360 / playersDetails.players.length) * index;
           const playerCard = player.droppedCard;
           return (
             <div
@@ -37,20 +40,24 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
                     <div className="player-card" style={{ transform: `translate(20px, 20px)` }}>
                        <Card suit={playerCard.suit} rank={playerCard.rank} />
                     </div>
-                )}
+                )} 
             </div>
           );
         })}
       </div>
       <div className="current-player-view">
+        {!isHost && playersDetails.isGamePaused && <h3>Ask host to start the turn/round</h3>}
+        {isHost && playersDetails.isGamePaused && <button className="start-next-turn-button" onClick={onNextTurnButton}>Start Next Turn</button> }
         <h3>Cutter card is: {cutterCard}</h3>
         {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
-        {gameData && gameData.playersToCard 
+        {gameData && gameData.playersToCard    
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
                      currentTurnPlayer = {currentPlayerTurn}
                      currentPlayer = {indexOfCurrentPlayer}
+                     maxCardsAtHand = {gameData.roundNumber - playersDetails.currentIterationCounter}
                      dropCard={dropCard}
-                />}
+                     isGamePaused={playersDetails.isGamePaused}
+                />} 
       </div>
     </div>
   );
