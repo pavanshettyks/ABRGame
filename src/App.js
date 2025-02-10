@@ -53,7 +53,7 @@ function App() {
             setPlayersDetails((prev) => {
               const team = prev.players.length % 2 === 0 ? "A" : "B";
               const updatedPlayers = [...prev.players, { id: prev.players.length + 1, name: data.playerName, team }];
-              return {"players":updatedPlayers, "currentPlayerTurn":0, "currentIterationCounter": 1};
+              return {"players":updatedPlayers, "currentPlayerTurn":0, "currentIterationCounter": 1, "isGamePaused": true};
             });
             setPlayerMap((prev) => {
               const playerCount = Object.keys(prev).length;
