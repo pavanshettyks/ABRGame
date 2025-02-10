@@ -2,7 +2,11 @@ import React from "react";
 import "../css/GameLobby.css";
 
 const GameLobby = ({ gameId, players, isHost, onStartGame}) => {
-  const gameUrl = `${window.location.origin}/?gameId=${gameId}`;
+  const basePath = window.location.pathname.endsWith("/") 
+    ? window.location.pathname 
+    : window.location.pathname + "/";
+
+  const gameUrl = `${window.location.origin}${basePath}?gameId=${gameId}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(gameUrl);
