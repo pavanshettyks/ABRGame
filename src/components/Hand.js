@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Card from "./Card";
 import "../css/Hand.css";
 
-const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, maxCardsAtHand, dropCard}) => {
+const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, maxCardsAtHand, dropCard, isGamePaused}) => {
     const [cards, setCards] = useState(initialCards);
     const [isCurrentPlayerTurn, setIsCurrentPlayerTurn] = useState(currentTurnPlayer === currentPlayer);
 
@@ -14,9 +14,9 @@ const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, maxCardsAtHand, 
     const handleRemoveCard = (index) => {
         // console.log("Remove one card: ", isCurrentPlayerTurn);
         // console.log("Remove one card: ", cards.length+1, maxCardsAtHand);
-        if (true && cards.length > maxCardsAtHand) {
+        if (true && cards.length > maxCardsAtHand && !isGamePaused) {
             const droppedCard = cards[index];
-            console.log("Dropped card", droppedCard) 
+            // console.log("Dropped card", droppedCard) 
             setCards(cards.filter((_, i) => i !== index));
             setIsCurrentPlayerTurn(false)
             dropCard(droppedCard, currentPlayer);

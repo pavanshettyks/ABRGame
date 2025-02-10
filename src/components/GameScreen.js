@@ -3,7 +3,8 @@ import "../css/GameScreen.css";
 import Hand from "./Hand";
 import Card from "./Card";
 
-const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn, enableNextTurnButton, onNextTurnButton}) => {
+const GameScreen = ({playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn,
+  isHost, onNextTurnButton}) => {
   let currentTurnPlayerName = null;
   let currentPlayerHand = null;
   const cutterCard = gameData.cutterCard;
@@ -45,16 +46,18 @@ const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, current
         })}
       </div>
       <div className="current-player-view">
-        {enableNextTurnButton && <button className="start-next-turn-button" onClick={onNextTurnButton}>Start Next Turn</button> }
+        {!isHost && playersDetails.isGamePaused && <h3>Ask host to start the turn/round</h3>}
+        {isHost && playersDetails.isGamePaused && <button className="start-next-turn-button" onClick={onNextTurnButton}>Start Next Turn</button> }
         <h3>Cutter card is: {cutterCard}</h3>
         {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
-        {gameData && gameData.playersToCard   
+        {gameData && gameData.playersToCard    
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
                      currentTurnPlayer = {currentPlayerTurn}
                      currentPlayer = {indexOfCurrentPlayer}
                      maxCardsAtHand = {gameData.roundNumber - playersDetails.currentIterationCounter}
                      dropCard={dropCard}
-                />}
+                     isGamePaused={playersDetails.isGamePaused}
+                />} 
       </div>
     </div>
   );

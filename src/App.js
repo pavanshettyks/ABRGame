@@ -10,7 +10,7 @@ import { initializeGame } from "./components/GameLogic";
 function App() {
   const [gameId, setGameId] = useState(null);
   // const [players, setPlayers] = useState([]);
-  const [playersDetails, setPlayersDetails] = useState({"players":[], "currentPlayerTurn": 0, "currentIterationCounter": 1});
+  const [playersDetails, setPlayersDetails] = useState({"players":[], "currentPlayerTurn": 0, "currentIterationCounter": 1, "isGamePaused": true});
   const [isHost, setIsHost] = useState(false);
   const [isInLobby, setIsInLobby] = useState(false);
   const [playerName, setPlayerName] = useState("");
@@ -24,7 +24,7 @@ function App() {
   const [gameData, setGameData] = useState({});
   const [connectionToHost, setconnectionToHost] = useState(null);
 
-  const [isWaitToDropCard, setIsWaitToDropCard] = useState(false);
+  // const [isWaitToDropCard, setIsWaitToDropCard] = useState(false);
 
   useEffect(() => {
   if (isHost) {
@@ -90,7 +90,9 @@ function App() {
 
 // Trigger update and broadcast players information which includes current dropped card and player turn
   useEffect(() => {
+    console.log("recieved an update", isHost, playersDetails);
     if (isHost && gameStarted) {
+      console.log("recieved an update", playersDetails);
       broadCastPlayersDataDuringGame(playersDetails);
     }
   }, [playersDetails]);  
@@ -101,8 +103,11 @@ useEffect(() => {
     setCurrentIteration(1);
     const gameData = initializeGame(currentRound, playerMap);
     broadCastGameData(gameData)
-    setIsWaitToDropCard(true);
-    // handleResetDroppedCards(gameData.currentPlayerTurn, 1);
+    // setIsWaitToDropCard(true);
+    let updatePlayerDetails = playersDetails;
+    updatePlayerDetails.isGamePaused = true;
+    setPlayersDetails(updatePlayerDetails)
+    // handleResetDroppedCards(gameData.currentPlayerTurn, 1, true);
   }
  }, [currentRound]);
 
@@ -111,11 +116,13 @@ useEffect(() => {
   if (isHost && currentIteration && gameData ) {
     if (currentIteration > currentRound){
       setCurrentRound(currentRound+1);
-      // setCurrentIteration(1);
+      setCurrentIteration(1);
     } 
     if (currentIteration > 1) {
-      setIsWaitToDropCard(true);
-      // handleResetDroppedCards(playersDetails.currentPlayerTurn, currentIteration)
+      let updatePlayerDetails = playersDetails;
+      updatePlayerDetails.isGamePaused = true;
+      setPlayersDetails(updatePlayerDetails)
+      // handleResetDroppedCards(playersDetails.currentPlayerTurn, currentIteration, true)
     }
   }
  }, [currentIteration]);
@@ -245,20 +252,21 @@ useEffect(() => {
     setGameStarted(true); 
   };
 
-  const handleResetDroppedCards = (currentPlayerTurn, currentIterationCounter) => {
+  const handleResetDroppedCards = (currentPlayerTurn, currentIterationCounter, isGamePaused) => {
     const updatedPlayersData = [...playersDetails.players];
     for (let i = 0; i < updatedPlayersData.length; i++) {
         updatedPlayersData[i].droppedCard = null;
     }
     setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
-      "currentIterationCounter": currentIterationCounter
+      "currentIterationCounter": currentIterationCounter, "isGamePaused": isGamePaused
     });
   }
 
   const handleOnNextTurnButton = () => {
     if (isHost) {
-      handleResetDroppedCards(gameData.currentPlayerTurn, currentIteration);
-      setIsWaitToDropCard(false);
+      // handleResetDroppedCards(gameData.currentPlayerTurn, currentIteration);
+      handleResetDroppedCards(gameData.currentPlayerTurn, currentIteration, false);
+      // setIsWaitToDropCard(false);
     }
   }
 
@@ -274,12 +282,14 @@ useEffect(() => {
     const currentPlayerTurn = (indexOfCurrentPlayer + 1) % updatedPlayersData.length;
     // console.log("index of game", currentPlayerTurn);
     const isNextIteration = updatedPlayersData.every(obj => obj.droppedCard);
+    let isGamePaused = false;
     if ( isNextIteration ) {
       currentIterationCounter = currentIterationCounter + 1;
+      isGamePaused = true;
       // setCurrentIteration(currentIterationCounter);
     }
     setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn, 
-      "currentIterationCounter": currentIterationCounter});
+      "currentIterationCounter": currentIterationCounter, "isGamePaused": isGamePaused});
     if (isHost) {
       // broadCastPlayersDataDuringGame({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
       //   "currentIterationCounter": currentIterationCounter
@@ -288,7 +298,7 @@ useEffect(() => {
     } 
     if (!isHost) {
       broadCastUpdateToHost({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
-        "currentIterationCounter": currentIterationCounter
+        "currentIterationCounter": currentIterationCounter, "isGamePaused": isGamePaused
       });
     }
   }; 
@@ -308,7 +318,7 @@ useEffect(() => {
       ) : (
         <GameScreen playersDetails={playersDetails} currentPlayer={playerName} gameData={gameData}
             currentPlayerTurn={playersDetails.currentPlayerTurn} dropCard={handleDropCard}
-            isHost={isHost} enableNextTurnButton = {isWaitToDropCard} onNextTurnButton={handleOnNextTurnButton}/>
+            isHost={isHost} onNextTurnButton={handleOnNextTurnButton}/>
       )}
     </div>
   );
