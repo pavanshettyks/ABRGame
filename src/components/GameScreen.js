@@ -3,15 +3,14 @@ import "../css/GameScreen.css";
 import Hand from "./Hand";
 import Card from "./Card";
 
-const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
-  console.log("Game Data...", gameData);
+const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
   let currentTurnPlayerName = null;
   let currentPlayerHand = null;
   const cutterCard = gameData.cutterCard;
-  const indexOfCurrentPlayer = players.findIndex(player => player.name === currentPlayer);
+  const indexOfCurrentPlayer = playersDetails.players.findIndex(player => player.name === currentPlayer);
 
   if (gameData && gameData.playersToCard){
-    currentTurnPlayerName = players[currentPlayerTurn].name;
+    currentTurnPlayerName = playersDetails.players[currentPlayerTurn].name;
     currentPlayerHand = gameData.playersToCard[indexOfCurrentPlayer];
   }
 
@@ -26,8 +25,8 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
     <div className="game-screen"> 
       <h2>Round {gameData.roundNumber}</h2> 
       <div className="player-circle"> 
-        {players.map((player, index) => {
-          const angle = (360 / players.length) * index;
+        {playersDetails.players.map((player, index) => {
+          const angle = (360 / playersDetails.players.length) * index;
           const playerCard = player.droppedCard;
           return (
             <div
@@ -52,6 +51,7 @@ const GameScreen = ({ players, currentPlayer, gameData, dropCard, currentPlayerT
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
                      currentTurnPlayer = {currentPlayerTurn}
                      currentPlayer = {indexOfCurrentPlayer}
+                     maxCardsAtHand = {gameData.roundNumber - playersDetails.currentIterationCounter}
                      dropCard={dropCard}
                 />}
       </div>
