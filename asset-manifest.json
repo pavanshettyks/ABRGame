@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/ABRGame/static/css/main.1fd7d4c2.css",
-    "main.js": "/ABRGame/static/js/main.702315b0.js",
+    "main.css": "/ABRGame/static/css/main.a8ce2bcc.css",
+    "main.js": "/ABRGame/static/js/main.2f0a46c7.js",
     "static/js/453.6884618f.chunk.js": "/ABRGame/static/js/453.6884618f.chunk.js",
     "index.html": "/ABRGame/index.html",
-    "main.1fd7d4c2.css.map": "/ABRGame/static/css/main.1fd7d4c2.css.map",
-    "main.702315b0.js.map": "/ABRGame/static/js/main.702315b0.js.map",
+    "main.a8ce2bcc.css.map": "/ABRGame/static/css/main.a8ce2bcc.css.map",
+    "main.2f0a46c7.js.map": "/ABRGame/static/js/main.2f0a46c7.js.map",
     "453.6884618f.chunk.js.map": "/ABRGame/static/js/453.6884618f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.1fd7d4c2.css",
-    "static/js/main.702315b0.js"
+    "static/css/main.a8ce2bcc.css",
+    "static/js/main.2f0a46c7.js"
   ]
 }
