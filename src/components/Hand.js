@@ -13,7 +13,7 @@ const Hand = ({ initialCards, currentTurnPlayer, currentPlayer, maxCardsAtHand, 
     // Remove card from hand
     const handleRemoveCard = (index) => {
         // console.log("Remove one card: ", isCurrentPlayerTurn);
-        console.log("Remove one card: ", cards.length+1, maxCardsAtHand);
+        // console.log("Remove one card: ", cards.length+1, maxCardsAtHand);
         if (true && cards.length > maxCardsAtHand) {
             const droppedCard = cards[index];
             console.log("Dropped card", droppedCard) 

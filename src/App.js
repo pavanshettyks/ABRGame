@@ -24,9 +24,10 @@ function App() {
   const [gameData, setGameData] = useState({});
   const [connectionToHost, setconnectionToHost] = useState(null);
 
+  const [isWaitToDropCard, setIsWaitToDropCard] = useState(false);
+
   useEffect(() => {
   if (isHost) {
-
     let newPeer = null;
     if (!peer){
         newPeer = new Peer();
@@ -38,7 +39,6 @@ function App() {
     } else {
       newPeer = peer;
     }
-
     newPeer.on("connection", (conn) => {
       // console.log("Player connected:", conn.peer);
       conn.on("data", (data) => {
@@ -101,7 +101,8 @@ useEffect(() => {
     setCurrentIteration(1);
     const gameData = initializeGame(currentRound, playerMap);
     broadCastGameData(gameData)
-    handleResetDroppedCards(gameData.currentPlayerTurn, 1);
+    setIsWaitToDropCard(true);
+    // handleResetDroppedCards(gameData.currentPlayerTurn, 1);
   }
  }, [currentRound]);
 
@@ -113,10 +114,19 @@ useEffect(() => {
       // setCurrentIteration(1);
     } 
     if (currentIteration > 1) {
-       handleResetDroppedCards(playersDetails.currentPlayerTurn, currentIteration)
+      setIsWaitToDropCard(true);
+      // handleResetDroppedCards(playersDetails.currentPlayerTurn, currentIteration)
     }
   }
  }, [currentIteration]);
+
+ // This will wait for Host to reset the round/iteration
+// useEffect(() => {
+//   if (isHost && !isWaitToDropCard) {
+//     handleResetDroppedCards(gameData.currentPlayerTurn, currentIteration);
+//     setIsWaitToDropCard(false);
+//   }
+//  }, [isWaitToDropCard]);
 
 // For non host to handle updates
   useEffect(() => {
@@ -232,7 +242,6 @@ useEffect(() => {
 
   const handleStartGame = () => {
     setCurrentRound(1);
-    // setCurrentIteration(1);
     setGameStarted(true); 
   };
 
@@ -240,11 +249,17 @@ useEffect(() => {
     const updatedPlayersData = [...playersDetails.players];
     for (let i = 0; i < updatedPlayersData.length; i++) {
         updatedPlayersData[i].droppedCard = null;
-        // console.log(updatedPlayersData[i]);
     }
     setPlayersDetails({"players":updatedPlayersData, "currentPlayerTurn": currentPlayerTurn,
       "currentIterationCounter": currentIterationCounter
     });
+  }
+
+  const handleOnNextTurnButton = () => {
+    if (isHost) {
+      handleResetDroppedCards(gameData.currentPlayerTurn, currentIteration);
+      setIsWaitToDropCard(false);
+    }
   }
 
   const handleDropCard = (card, indexOfCurrentPlayer) => {
@@ -280,7 +295,7 @@ useEffect(() => {
 
   return (
     <div className="App">
-      {playerName && <h2 className="player-name">Welcome,, {playerName}!</h2>}
+      {playerName && <h2 className="player-name">Welcome, {playerName}!</h2>}
       {!gameId ? (
         <EntryScreen 
           onHostGame={handleHostGame} 
@@ -293,7 +308,7 @@ useEffect(() => {
       ) : (
         <GameScreen playersDetails={playersDetails} currentPlayer={playerName} gameData={gameData}
             currentPlayerTurn={playersDetails.currentPlayerTurn} dropCard={handleDropCard}
-            isHost={isHost} />
+            isHost={isHost} enableNextTurnButton = {isWaitToDropCard} onNextTurnButton={handleOnNextTurnButton}/>
       )}
     </div>
   );

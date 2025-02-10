@@ -3,7 +3,7 @@ import "../css/GameScreen.css";
 import Hand from "./Hand";
 import Card from "./Card";
 
-const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn}) => {
+const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, currentPlayerTurn, enableNextTurnButton, onNextTurnButton}) => {
   let currentTurnPlayerName = null;
   let currentPlayerHand = null;
   const cutterCard = gameData.cutterCard;
@@ -45,6 +45,7 @@ const GameScreen = ({ playersDetails, currentPlayer, gameData, dropCard, current
         })}
       </div>
       <div className="current-player-view">
+        {enableNextTurnButton && <button className="start-next-turn-button" onClick={onNextTurnButton}>Start Next Turn</button> }
         <h3>Cutter card is: {cutterCard}</h3>
         {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
         {gameData && gameData.playersToCard   
