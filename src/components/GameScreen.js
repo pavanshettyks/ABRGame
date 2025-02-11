@@ -46,10 +46,10 @@ const GameScreen = ({playersDetails, currentPlayer, gameData, dropCard, currentP
         })}
       </div>
       <div className="current-player-view">
-        {!isHost && playersDetails.isGamePaused && <h3>Ask host to start the turn/round</h3>}
+        {!isHost && playersDetails.isGamePaused && <p>Ask host to start the turn/round</p>}
         {isHost && playersDetails.isGamePaused && <button className="start-next-turn-button" onClick={onNextTurnButton}>Start Next Turn</button> }
-        <h3>Cutter card is: {cutterCard}</h3>
-        {currentTurnPlayerName && <h3>Player Turn: {currentTurnPlayerName}</h3> }
+        <h5>Cutter card is: {cutterCard}</h5>
+        {currentTurnPlayerName && <h5>Player Turn: {currentTurnPlayerName}</h5> }
         {gameData && gameData.playersToCard    
             && <Hand initialCards={gameData.playersToCard[indexOfCurrentPlayer]} 
                      currentTurnPlayer = {currentPlayerTurn}

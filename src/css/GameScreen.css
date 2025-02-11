@@ -1,3 +1,11 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent scrolling */
+  height: 100%;
+  width: 100%;
+}
+
 .game-screen {
   display: flex;
   flex-direction: column;
@@ -6,6 +14,9 @@
   padding: 20px;
   background-color: #f4f4f4;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* Prevent internal scrolling */
+  position: relative;
 }
 
 .player-circle {
@@ -50,12 +61,13 @@
 }
 
 .current-player-view {
-  margin-top: 20px;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 5px 5px; /* Add padding on both sides for space */
   border: 2px solid #ccc;
   background: white;
   width: 80%;
-  max-width: 300px;
+  max-width: 400px; /* Ensure the content doesn't stretch too wide */
+  box-sizing: border-box; /* Include padding in the width calculation */
 }
 
 .button {

@@ -1,4 +1,4 @@
-.hand {
+/* .hand {
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
@@ -8,5 +8,27 @@
 }
 
 .hand::-webkit-scrollbar {
-    display: none; /* Hide scrollbar on mobile */
+    display: none; 
+} 
+*/
+
+.hand {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px; /* Space between cards */
+    padding: 0px;
+    width: 100%;
 }
+
+.hand > * {
+    flex: 1 1 calc(100% / 8 - 4px); /* Ensures 6 cards per row */
+    max-width: calc(100% / 8 - 4px); /* Ensures 6 cards per row */
+    aspect-ratio: 3 / 4; /* Maintains correct height-to-width ratio */
+    min-width: 5px; /* Prevents cards from shrinking too small */
+}
+
+.hand::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for cleaner mobile experience */
+}
+

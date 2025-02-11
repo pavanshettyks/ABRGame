@@ -6,6 +6,7 @@ import GameLobby from "./components/GameLobby";
 import "./css/GameLobby.css";
 import GameScreen from "./components/GameScreen";
 import { initializeGame } from "./components/GameLogic";
+import { generateGameId } from "./utils/gameUtils";
 
 function App() {
   const [gameId, setGameId] = useState(null);
@@ -25,18 +26,22 @@ function App() {
   const [connectionToHost, setconnectionToHost] = useState(null);
 
   // const [isWaitToDropCard, setIsWaitToDropCard] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
   if (isHost) {
+    console.log("dtest")
     let newPeer = null;
     if (!peer){
-        newPeer = new Peer();
+          console.log("dtest1")
+        newPeer = new Peer(generateGameId());
         newPeer.on("open", (id) => {
         console.log("Host Peer ID:", id);
         setGameId(id); // Set gameId to the peer ID
       });
       setPeer(newPeer);
     } else {
+      console.log("dtest2")
       newPeer = peer;
     }
     newPeer.on("connection", (conn) => {
@@ -44,12 +49,6 @@ function App() {
       conn.on("data", (data) => {
         // console.log("Received data:", data);
         if (data.type === "join") {
-            // setPlayers((prev) => {
-            //   const team = prev.length % 2 === 0 ? "A" : "B";
-            //   const updatedPlayers = [...prev, { id: prev.length + 1, name: data.playerName, team }];
-            //   return updatedPlayers;
-            // });
-            // console.log(playersDetails);
             setPlayersDetails((prev) => {
               const team = prev.players.length % 2 === 0 ? "A" : "B";
               const updatedPlayers = [...prev.players, { id: prev.players.length + 1, name: data.playerName, team }];
@@ -78,7 +77,10 @@ function App() {
               return data.playersData;
             });
             setCurrentIteration(data.playersData.currentIterationCounter);
-          }
+        }
+        if (data.type === "errorMessages") {
+          setErrorMessage(data.data.errorMessages);
+        }
       });
     });
     // if (gameStarted) {
@@ -148,6 +150,7 @@ useEffect(() => {
           setconnectionToHost(conn);
       });
       conn.on("data", (data) => {
+        console.log("recieved data", data)
         if (data.type === "playersData") {
           console.log("Recieved player data: ", data.playersData);
           setPlayersDetails(data.playersData);
@@ -157,13 +160,51 @@ useEffect(() => {
           setGameStarted(data.data.isGame);
           setGameData(data.data.gameDetails); 
         }
+        if (data.type === "errorMessages") {
+          setErrorMessage(data.data.errorMessages);
+        }
+
+      });
+      conn.on("error", (err) => {
+          console.error("PeerJS Connection Error:", err);
+          setErrorMessage("PeerJS Connection Error:", err);
       });
       setConnections((prev) => ({ ...prev, [gameId]: conn }));
+    });
+    newPeer.on("error", (err) => {
+      console.error("PeerJS Error:", err);
+      setErrorMessage("PeerJS Error: " + err);
     });
    setPeer(newPeer);
    setGameId(gameId);
     }
   }, [!isHost, isInLobby]);
+
+  // clear error message after 5sec
+  useEffect(() => {
+    if (errorMessage) {
+      if (isHost) {
+        broadCastErrorMessages({ "errorMessages":errorMessage});
+      } else {
+         connectionToHost.send({ type: "errorMessages", "data":{"errorMessages":errorMessage}});
+      }
+      const timer = setTimeout(() => {
+        setErrorMessage(null); // Remove error after 5 seconds
+      }, 5000);
+      return () => clearTimeout(timer); // Cleanup on unmount
+    }
+  }, [errorMessage]);
+
+  // send game details to all players
+  const broadCastErrorMessages = (errorMessage) => {
+    // console.log(`Initial gameData:`, gameData);
+    Object.entries(playerMap).forEach(([name, value]) => {
+      if (value.connection && value.connection.open) {
+        // console.log(`Broacasting game data to update Player: ${name}, team : ${value.teamName}`);
+        value.connection.send({ type: "errorMessages", data: errorMessage});
+      }
+    });
+  };
 
   // send game details to all players
   const broadCastGameData = (gameData) => {
@@ -199,7 +240,7 @@ useEffect(() => {
     Object.entries(updatedMap).forEach(([name, value]) => {
       if (value.connection && value.connection.open) {
         // console.log(`Broacasting the update Player: ${name}, Peer ID: ${value.connection.peer}, team : ${value.teamName}`);
-        value.connection.send({ type: "playersData", "playersData": { "players":players, "currentPlayerTurn":0, "currentIterationCounter": 1} });
+        value.connection.send({ type: "playersData", "playersData": { "players":players, "currentPlayerTurn":0, "currentIterationCounter": 1, "isGamePaused": true} });
       }
     });
   };
@@ -217,7 +258,10 @@ useEffect(() => {
    }
    setPlayerName(name);
     setPlayersDetails(
-      {"players" : [{ id: 1, name: name, team: "A" }]});
+      {"players" : [{ id: 1, name: name, team: "A" }], 
+       "currentPlayerTurn": 0,
+      "currentIterationCounter": 0, "isGamePaused": true
+    });
       // { id: prev.length + 2, name: "name1", team: "B" },);
     setPlayerMap((prev) => {
       const updatedMap = {
@@ -250,6 +294,20 @@ useEffect(() => {
   const handleStartGame = () => {
     setCurrentRound(1);
     setGameStarted(true); 
+  };
+
+  const goToHome = () => {
+    const newUrl = window.location.pathname; // Remove query params
+    window.history.replaceState(null, "", newUrl);
+    window.location.reload(); 
+  };
+
+  const endGame = () => {
+    if (isHost) {
+      setGameStarted(false);
+      setCurrentRound(0);
+      setErrorMessage("Game ended by host.");
+    }
   };
 
   const handleResetDroppedCards = (currentPlayerTurn, currentIterationCounter, isGamePaused) => {
@@ -305,7 +363,14 @@ useEffect(() => {
 
   return (
     <div className="App">
-      {playerName && <h2 className="player-name">Welcome, {playerName}!</h2>}
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
+      <div className="top-bar">
+        <button onClick={goToHome} className="home-button">Home</button>
+        {playerName && <h2 className="player-name">Welcome, {playerName}!</h2>}
+        {isHost && gameStarted && (
+          <button onClick={endGame} className="end-game-button">End Game</button>
+        )}
+      </div>
       {!gameId ? (
         <EntryScreen 
           onHostGame={handleHostGame} 
